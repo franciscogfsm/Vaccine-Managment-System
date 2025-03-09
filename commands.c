@@ -7,7 +7,6 @@
 
 
 void add_lot(const char *lote, Date date, int doses, const char *vaccine_name, VaccineHashTable *vaccine_table, HashTable *lots_table, int portuguese) {
-    int day,month,year = {date.day, date.month, date.year};
     if (get_number_of_lots(lots_table) >= MAX_SIZE) {
         if (portuguese) {
             printf("demasiadas vacinas\n");
@@ -41,15 +40,6 @@ void add_lot(const char *lote, Date date, int doses, const char *vaccine_name, V
         return;
 
     }
-    if (check_date( day,month,year) == 1) {
-        if (portuguese) {
-            printf("data inválida\n");
-        } else {
-            printf("invalid date\n");
-        }
-        return;
-
-    }
     if (doses < 1){
         if (portuguese) {
             printf("quantidade inválida\n");
@@ -59,24 +49,28 @@ void add_lot(const char *lote, Date date, int doses, const char *vaccine_name, V
         return;
     }
     
-    insert_vaccine(lots_table, lote, date, doses);
+    insert_vaccine(lots_table, lote, date, doses,vaccine_name);
+    insert_lote(vaccine_table, vaccine_name, lote, lots_table);
     printf("%s\n",lote);
 
 }
 
 
-void list_lots(VaccineHashTable *vaccine_table, HashTable *lots_table, const char *vaccine_name,  int print_all,int portuguese) {
+void list_lots(VaccineHashTable *vaccine_table, HashTable *lots_table, const char *vaccine_name, int print_all, int portuguese) {
     if (print_all) {
         for (int i = 0; i < vaccine_table->size; i++) {
             VaccineEntry *entry = vaccine_table->table[i];
+            if (entry == NULL) continue;  
+    
             while (entry != NULL) {
-                printf("%s:\n", entry->name);
                 Lote *lotes = entry->lotes;
+                if (lotes == NULL) continue; 
+    
                 while (lotes != NULL) {
                     Vaccine *vaccine = find_vaccine(lots_table, lotes->lote);
                     if (vaccine != NULL) {
-                        printf("%s %s %02d-%02d-%04d %d %d\n", entry->name, lotes->lote, vaccine->date.day, vaccine->date.month, vaccine->date.year, vaccine->doses, 0); // Número de aplicações não especificado
-                    }
+                        printf("%s %s %02d-%02d-%04d %d %d\n", entry->name, lotes->lote, vaccine->date.day, vaccine->date.month, vaccine->date.year, vaccine->doses, vaccine->applications);
+                    } 
                     lotes = lotes->next;
                 }
                 entry = entry->next;
@@ -99,6 +93,10 @@ void list_lots(VaccineHashTable *vaccine_table, HashTable *lots_table, const cha
         Lote *sorted_lotes = NULL;
         while (lotes != NULL) {
             Lote *new_lote = malloc(sizeof(Lote));
+            if (new_lote == NULL) {
+                fprintf(stderr, "Erro ao alocar memória\n");
+                return;
+            }
             strcpy(new_lote->lote, lotes->lote);
             new_lote->next = NULL;
 
@@ -127,7 +125,7 @@ void list_lots(VaccineHashTable *vaccine_table, HashTable *lots_table, const cha
         while (sorted_lotes != NULL) {
             Vaccine *vaccine = find_vaccine(lots_table, sorted_lotes->lote);
             if (vaccine != NULL) {
-                printf("%s %s %02d-%02d-%04d %d %d\n", vaccine_name, sorted_lotes->lote, vaccine->date.day, vaccine->date.month, vaccine->date.year, vaccine->doses, 0); // Número de aplicações não especificado
+                printf("%s %s %02d-%02d-%04d %d %d\n", vaccine_name, sorted_lotes->lote, vaccine->date.day, vaccine->date.month, vaccine->date.year, vaccine->doses, vaccine->applications);
             }
             Lote *temp = sorted_lotes;
             sorted_lotes = sorted_lotes->next;

@@ -1,4 +1,6 @@
 #include "structs.h"
+#include "functions.h"
+
 
 unsigned int hash(const char *str, int size) {
     unsigned int hash = 0;
@@ -148,4 +150,23 @@ void free_vaccine_table(VaccineHashTable *table) {
     }
     free(table->table);
     free(table);
+}
+
+
+void print_vaccine_table(VaccineHashTable *table) {
+    for (int i = 0; i < table->size; i++) {
+        VaccineEntry *entry = table->table[i];
+        if (entry != NULL) {
+            printf("Index %d:\n", i);
+            while (entry != NULL) {
+                printf("  Vaccine: %s\n", entry->name);
+                Lote *lotes = entry->lotes;
+                while (lotes != NULL) {
+                    printf("    Lote: %s\n", lotes->lote);
+                    lotes = lotes->next;
+                }
+                entry = entry->next;
+            }
+        }
+    }
 }

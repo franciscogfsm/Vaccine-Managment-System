@@ -7,9 +7,7 @@
 
 int main(int argc, char *argv[]) {
     char input[BUFSIZE];
-    char command[BUFSIZE];
     char lote[MAX_LOTE_LENGTH];
-    char date[MAX_DATE_LENGTH];
     char vaccine_name[MAX_NAME_LENGTH];
     char vaccine_names[BUFSIZE][MAX_NAME_LENGTH];
     int doses;
@@ -31,12 +29,27 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    UserHashTable *user_table = create_user_table(INITIAL_SIZE);
+    if (user_table == NULL) {
+        fprintf(stderr, "Failed to create user table\n");
+        free_vaccine_table(vaccine_table);
+        free_table(lots_table);
+        return 1;
+    }
+
     if (argc > 1 && strcmp(argv[1], "pt") == 0) {
         portuguese = 1;
     }
 
     while (1) {
-        fgets(input, BUFSIZE, stdin);
+        if (fgets(input, BUFSIZE, stdin) == NULL) {
+            printf("Erro ao ler a entrada\n");
+            continue;
+        }
+
+        // Remove o caractere de nova linha, se presente
+        input[strcspn(input, "\n")] = 0;
+
         switch (input[0]) {
             case 'q':
                 free_vaccine_table(vaccine_table);
@@ -44,15 +57,24 @@ int main(int argc, char *argv[]) {
                 return 0;
             case 'c':
                 if (sscanf(input, "c %s %d-%d-%d %d %s", lote, &expiration_date.day, &expiration_date.month, &expiration_date.year, &doses, vaccine_name) == 6) {
-                    add_lot(lote, expiration_date, doses, vaccine_name, vaccine_table, lots_table, portuguese);
-                } else {
-                    printf("Formato de entrada inválido!\n");
-                }
+                    if (check_date( expiration_date.day, expiration_date.month, expiration_date.year,
+                    current_date.day, current_date.month, current_date.year)) {
+                        if (portuguese) {
+                            printf("data inválida\n");
+                        } else {
+                            printf("invalid date\n");
+                        }
+                        
+                    }else{
+                        add_lot(lote, expiration_date, doses, vaccine_name, vaccine_table, lots_table, portuguese);
+                    }
+                } 
                 break;
             case 'l': {
-                if (strlen(input) == 2) {
-                    list_lots(vaccine_table, lots_table, NULL, portuguese, 1);
-                } else{
+
+                if (strlen(input) == 1) {
+                    list_lots(vaccine_table, lots_table, NULL, 1,portuguese);
+                } else {
                     int num_vaccines = 0;
                     char *token = strtok(input + 2, " ");
                     while (token != NULL && num_vaccines < BUFSIZE) {
@@ -63,18 +85,17 @@ int main(int argc, char *argv[]) {
                     }
                     if (num_vaccines > 0) {
                         for (int i = 0; i < num_vaccines; i++) {
-                            list_lots(vaccine_table, lots_table, vaccine_names[i],0,portuguese);
+                            list_lots(vaccine_table, lots_table, vaccine_names[i], portuguese, 0);
                         }
-                    } else {
-                    printf("Formato de entrada inválido!\n");
+                    } 
                 }
                 break;
             }
             case 't':
-                if (strlen(input) == 2) { // Verifica se o comando é apenas 't'
+                if (strlen(input) == 1) { // Verifica se o comando é apenas 't'
                     printf("%02d-%02d-%04d\n", current_date.day, current_date.month, current_date.year);
                 } else if (sscanf(input, "t %d-%d-%d", &expiration_date.day, &expiration_date.month, &expiration_date.year) == 3) {
-                    if (check_date(expiration_date.day, expiration_date.month, expiration_date.year)) {
+                    if (check_date(expiration_date.day, expiration_date.month, expiration_date.year,current_date.day, current_date.month, current_date.year)) {
                         if (portuguese) {
                             printf("data inválida\n");
                         } else {
@@ -82,10 +103,8 @@ int main(int argc, char *argv[]) {
                         }
                     } else {
                         current_date = expiration_date;
-                        printf("%02d-%02d-%04d\n", current_date.day,current_date.month, current_date.year);
+                        printf("%02d-%02d-%04d\n", current_date.day, current_date.month, current_date.year);
                     }
-                } else {
-                    printf("Formato de entrada inválido!\n");
                 }
                 break;
             default:
@@ -94,3 +113,9 @@ int main(int argc, char *argv[]) {
         }
     }
 }
+
+//c A0C0 30-7-2025 210 malária
+//c A0C1 31-7-2025 210 malária
+//c A0C2 29-7-2025 210 malária
+
+//(nomeutente,nomevacina)

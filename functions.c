@@ -6,7 +6,7 @@
 
 
 
-int check_date(int day, int month, int year) {
+int check_date(int day, int month, int year, int current_day, int current_month, int current_year) {
     // Check if month is valid
     if (month < 1 || month > 12) {
         return 1;
@@ -35,9 +35,9 @@ int check_date(int day, int month, int year) {
     }
 
     // Verificar se a data é antes de 01-01-2025
-    Date start_date = {1, 1, 2025};
+    Date current_date = {current_day, current_month, current_year};
     Date input_date = {day, month, year};
-    if (compare_dates(input_date, start_date) == 1) {
+    if (compare_dates(input_date, current_date) == 1) {
         return 1;
     }
 
@@ -70,13 +70,15 @@ int check_lote(const char *lote) {
         return 1;
     }
     // Verifica se todos os caracteres são dígitos hexadecimais maiúsculos
-    for (int i = 0; i < strlen(lote); i++) {
+    for (size_t i = 0; i < strlen(lote); i++) {
         if (!((lote[i] >= '0' && lote[i] <= '9') || (lote[i] >= 'A' && lote[i] <= 'F'))) {
             return 1;
         }
     }
     return 0;
 }
+
+
 int check_name(const char *name) {
     if (strlen(name) > MAX_NAME_LENGTH) {
         return 1;
