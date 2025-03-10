@@ -54,6 +54,7 @@ typedef struct {
 // Estrutura de aplicação
 typedef struct Application {
     char lote[MAX_LOTE_LENGTH]; // Lote da vacina
+    char vaccine_name[MAX_NAME_LENGTH]; // Nome da vacina
     Date date;                  // Data da aplicação
     struct Application *next;   // Próxima aplicação
 } Application;
@@ -71,7 +72,6 @@ typedef struct {
     int size;      // Tamanho da tabela
     int count;     // Número de utentes cadastrados
 } UserHashTable;
-
 
 
 
@@ -99,8 +99,11 @@ User* find_user(UserHashTable *table, const char *name);
 void free_user_table(UserHashTable *table);
 void print_user_table(UserHashTable *table);
 void resize_user_table(UserHashTable *table);
-int insert_user(UserHashTable *table, const char *name);
+int insert_user(UserHashTable *table, const char *name) ;
 int remove_user(UserHashTable *table, const char *name);
+int add_application(UserHashTable *user_table, const char *user_name, 
+    const char *vaccine_name, Date date, const char *lote);
+
 
 
 

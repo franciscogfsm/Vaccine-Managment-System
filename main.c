@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
             case 'q':
                 free_vaccine_table(vaccine_table);
                 free_table(lots_table);
+                free_user_table(user_table);
                 return 0;
             case 'c':
                 if (sscanf(input, "c %s %d-%d-%d %d %s", lote, &expiration_date.day, &expiration_date.month, &expiration_date.year, &doses, vaccine_name) == 6) {

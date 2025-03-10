@@ -15,9 +15,6 @@ UserHashTable* create_user_table(int size) {
     return table;
 }
 
-
-
-
 void resize_user_table(UserHashTable *table) {
     if (table->size >= MAX_SIZE) {
         return;
@@ -48,7 +45,6 @@ void resize_user_table(UserHashTable *table) {
     table->size = new_size;
 }
 
-
 int insert_user(UserHashTable *table, const char *name) {
     if (table->count >= MAX_SIZE) {
         return -1; // Tabela cheia
@@ -72,6 +68,29 @@ int insert_user(UserHashTable *table, const char *name) {
     return 0; // Sucesso
 }
 
+int add_application(UserHashTable *user_table, const char *user_name, const char *vaccine_name, Date date, const char *lote) {
+    User *user = find_user(user_table, user_name);
+    if (user == NULL) {
+        // Se o utente não existir, insere um novo utente
+        if (insert_user(user_table, user_name) != 0) {
+            return -1; // Falha ao inserir utente
+        }
+        user = find_user(user_table, user_name);
+    }
+
+    // Cria uma nova aplicação
+    Application *app = malloc(sizeof(Application));
+    if (app == NULL) {
+        return -1; // Falha ao alocar memória
+    }
+    strcpy(app->lote, lote);
+    strcpy(app->vaccine_name, vaccine_name);
+    app->date = date;
+    app->next = user->applications;
+    user->applications = app;
+
+    return 0; // Sucesso
+}
 
 int remove_user(UserHashTable *table, const char *name) {
     unsigned int index = hash(name, table->size);
@@ -107,6 +126,32 @@ int remove_user(UserHashTable *table, const char *name) {
     return 0; // Sucesso
 }
 
+int remove_application(UserHashTable *user_table, const char *user_name, const char *lote) {
+    User *user = find_user(user_table, user_name);
+    if (user == NULL) {
+        return 1; // Utente não encontrado
+    }
+
+    Application *app = user->applications;
+    Application *prev_app = NULL;
+    while (app != NULL && strcmp(app->lote, lote) != 0) {
+        prev_app = app;
+        app = app->next;
+    }
+
+    if (app == NULL) {
+        return 1; // Aplicação não encontrada
+    }
+
+    if (prev_app == NULL) {
+        user->applications = app->next;
+    } else {
+        prev_app->next = app->next;
+    }
+
+    free(app);
+    return 0; // Sucesso
+}
 
 User* find_user(UserHashTable *table, const char *name) {
     unsigned int index = hash(name, table->size);
@@ -116,7 +161,6 @@ User* find_user(UserHashTable *table, const char *name) {
     }
     return user; // Retorna NULL se não encontrado
 }
-
 
 void free_user_table(UserHashTable *table) {
     for (int i = 0; i < table->size; i++) {
@@ -147,7 +191,7 @@ void print_user_table(UserHashTable *table) {
                 printf("  Utente: %s\n", user->name);
                 Application *app = user->applications;
                 while (app != NULL) {
-                    printf("    Aplicação: Lote %s, Data %02d-%02d-%04d\n", app->lote, app->date.day, app->date.month, app->date.year);
+                    printf("    Aplicação: Vacina %s, Lote %s, Data %02d-%02d-%04d\n", app->vaccine_name, app->lote, app->date.day, app->date.month, app->date.year);
                     app = app->next;
                 }
                 user = user->next;
