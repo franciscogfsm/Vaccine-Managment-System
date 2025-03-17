@@ -10,6 +10,7 @@ int main(int argc, char *argv[]) {
     char lote[MAX_LOTE_LENGTH];
     char vaccine_name[MAX_NAME_LENGTH];
     char vaccine_names[BUFSIZE][MAX_NAME_LENGTH];
+    char user_name[MAX_NAME_LENGTH];
     int doses;
     int portuguese = 0; // English default
     Date current_date = {1, 1, 2025};
@@ -92,6 +93,12 @@ int main(int argc, char *argv[]) {
                 }
                 break;
             }
+            case 'a':
+                if (sscanf(input, "a %s %s", user_name,vaccine_name) == 2) {
+                    vaccinate(user_name,vaccine_name,vaccine_table, lots_table,current_date, portuguese);
+                    print_lots_table(lots_table);
+                }
+                break;
             case 't':
                 if (strlen(input) == 1) { // Verifica se o comando é apenas 't'
                     printf("%02d-%02d-%04d\n", current_date.day, current_date.month, current_date.year);
@@ -116,7 +123,7 @@ int main(int argc, char *argv[]) {
 }
 
 //c A0C0 30-7-2025 210 malária
-//c A0C1 31-7-2025 210 malária
+//c A0C1 31-7-2025 210 tosse_convulsa
 //c A0C2 29-7-2025 210 malária
-
+//c A0C0 31-7-2025 210 malária
 //(nomeutente,nomevacina)

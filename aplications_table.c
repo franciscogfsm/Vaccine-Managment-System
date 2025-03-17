@@ -4,9 +4,18 @@
 #include "constants.h"
 #include "structs.h"
 
+
+
 UserHashTable* create_user_table(int size) {
     UserHashTable *table = malloc(sizeof(UserHashTable));
+    if (table == NULL) {
+        return NULL; // Falha ao alocar memória
+    }
     table->table = malloc(sizeof(User*) * size);
+    if (table->table == NULL) {
+        free(table);
+        return NULL; // Falha ao alocar memória
+    }
     for (int i = 0; i < size; i++) {
         table->table[i] = NULL;
     }
@@ -25,6 +34,9 @@ void resize_user_table(UserHashTable *table) {
     }
 
     User **new_table = malloc(sizeof(User*) * new_size);
+    if (new_table == NULL) {
+        return; // Falha ao alocar memória
+    }
     for (int i = 0; i < new_size; i++) {
         new_table[i] = NULL;
     }

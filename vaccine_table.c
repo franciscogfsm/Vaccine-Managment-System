@@ -1,6 +1,8 @@
 #include "structs.h"
 #include "functions.h"
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 unsigned int hash(const char *str, int size) {
     unsigned int hash = 0;
@@ -97,15 +99,22 @@ int insert_lote(VaccineHashTable *table, const char *vaccine_name, const char *l
     strcpy(new_lote->lote, lote);
     new_lote->next = NULL;
 
-    // Inserir o lote na lista ordenada por data
+    // Inserir o lote na lista ordenada corretamente
     Lote **current = &entry->lotes;
     while (*current != NULL) {
-        Vaccine *details_current = find_vaccine(lote_table, (*current)->lote);
-        Vaccine *details_new = find_vaccine(lote_table, lote);
+        Vaccine *details_current = find_lote(lote_table, (*current)->lote);
+        Vaccine *details_new = find_lote(lote_table, lote);
         if (details_current != NULL && details_new != NULL) {
             Date date_current = details_current->date;
             Date date_new = details_new->date;
-            if (compare_dates(date_current, date_new) > 0) {
+            int date_comparison = compare_dates(date_new, date_current);
+
+            //  Corrigido: Primeiro, ordena por data mais antiga primeiro
+            if (date_comparison > 0) {  
+                break;
+            }
+            // Se as datas forem iguais, ordena alfabeticamente
+            if (date_comparison == 0 && strcmp(lote, (*current)->lote) < 0) {
                 break;
             }
         }
@@ -117,20 +126,39 @@ int insert_lote(VaccineHashTable *table, const char *vaccine_name, const char *l
     return 0; // Sucesso
 }
 
-Lote* find_lotes(VaccineHashTable *table, const char *vaccine_name) {
+
+Date get_oldest_date(VaccineHashTable *table, HashTable *lots_table, const char *vaccine_name) {
+    Lote *lotes = find_vaccine(table, vaccine_name);
+    if (lotes == NULL) {
+        Date invalid_date = {0, 0, 0}; // Retorna uma data inválida se não encontrado
+        return invalid_date;
+    }
+    // Procura o primeiro lote com doses disponíveis
+    while (lotes != NULL) {
+        Vaccine *vaccine = find_lote(lots_table, lotes->lote);
+        if (vaccine != NULL && vaccine->doses > 0) {
+            return vaccine->date;
+        }
+        lotes = lotes->next;
+    }
+
+    Date invalid_date = {0, 0, 0}; // Retorna uma data inválida se não encontrar nenhum lote com doses disponíveis
+    return invalid_date;
+}
+
+
+
+
+Lote* find_vaccine(VaccineHashTable *table, const char *vaccine_name) {
     unsigned int index = hash(vaccine_name, table->size);
     VaccineEntry *entry = table->table[index];
-    
     while (entry != NULL && strcmp(entry->name, vaccine_name) != 0) {
         entry = entry->next;
     }
-    
     if (entry == NULL) {
         return NULL; // Não encontrado
     }
-    
     return entry->lotes; // Encontrado
-
 }
 
 void free_vaccine_table(VaccineHashTable *table) {
@@ -151,7 +179,6 @@ void free_vaccine_table(VaccineHashTable *table) {
     free(table->table);
     free(table);
 }
-
 
 void print_vaccine_table(VaccineHashTable *table) {
     for (int i = 0; i < table->size; i++) {

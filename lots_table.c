@@ -4,9 +4,17 @@
 #include "constants.h"
 #include "structs.h"
 
+
 HashTable* create_table(int size) {
     HashTable *table = malloc(sizeof(HashTable));
+    if (table == NULL) {
+        return NULL; // Falha ao alocar memória
+    }
     table->table = malloc(sizeof(Vaccine*) * size);
+    if (table->table == NULL) {
+        free(table);
+        return NULL; // Falha ao alocar memória
+    }
     for (int i = 0; i < size; i++) {
         table->table[i] = NULL;
     }
@@ -19,21 +27,28 @@ void resize_table(HashTable *table) {
     if (table->size >= MAX_SIZE) {
         return;
     }
-    // Duplica o tamanho da tabela
+
     int new_size = table->size * 2;
     if (new_size > MAX_SIZE) {
         new_size = MAX_SIZE;
     }
 
     Vaccine **new_table = malloc(sizeof(Vaccine*) * new_size);
+    if (new_table == NULL) {
+        return; // Falha ao alocar memória
+    }
     for (int i = 0; i < new_size; i++) {
         new_table[i] = NULL;
     }
 
     for (int i = 0; i < table->size; i++) {
-        if (table->table[i] != NULL) {
-            unsigned int new_index = hash(table->table[i]->lote, new_size);
-            new_table[new_index] = table->table[i];
+        Vaccine *entry = table->table[i];
+        while (entry != NULL) {
+            Vaccine *next = entry->next;
+            unsigned int new_index = hash(entry->lote, new_size);
+            entry->next = new_table[new_index];
+            new_table[new_index] = entry;
+            entry = next;
         }
     }
 
@@ -52,11 +67,15 @@ int insert_vaccine(HashTable *table, const char *lote, Date date, int doses, con
     }
 
     unsigned int index = hash(lote, table->size);
-    if (table->table[index] != NULL) {
-        return -1; // Lote já existente
+    Vaccine *entry = table->table[index];
+    while (entry != NULL) {
+        if (strcmp(entry->lote, lote) == 0) {
+            return -1; // Lote já existente
+        }
+        entry = entry->next;
     }
 
-    Vaccine *entry = malloc(sizeof(Vaccine));
+    entry = malloc(sizeof(Vaccine));
     if (entry == NULL) {
         return -1; // Falha ao alocar memória
     }
@@ -65,6 +84,7 @@ int insert_vaccine(HashTable *table, const char *lote, Date date, int doses, con
     entry->doses = doses;
     entry->applications = 0; // Inicializa o número de aplicações como 0
     strcpy(entry->name, name); // Armazena o nome da vacina
+    entry->next = table->table[index];
     table->table[index] = entry;
     table->count++;
 
@@ -73,30 +93,46 @@ int insert_vaccine(HashTable *table, const char *lote, Date date, int doses, con
 
 int remove_vaccine(HashTable *table, const char *lote) {
     unsigned int index = hash(lote, table->size);
-    if (table->table[index] == NULL) {
+    Vaccine *entry = table->table[index];
+    Vaccine *prev = NULL;
+
+    while (entry != NULL && strcmp(entry->lote, lote) != 0) {
+        prev = entry;
+        entry = entry->next;
+    }
+
+    if (entry == NULL) {
         return 1; // Não encontrado
     }
 
-    free(table->table[index]);
-    table->table[index] = NULL;
+    if (prev == NULL) {
+        table->table[index] = entry->next;
+    } else {
+        prev->next = entry->next;
+    }
+
+    free(entry);
     table->count--;
 
     return 0; // Sucesso
 }
 
-Vaccine* find_vaccine(HashTable *table, const char *lote) {
+Vaccine* find_lote(HashTable *table, const char *lote) {
     unsigned int index = hash(lote, table->size);
-    if (table->table[index] == NULL) {
-        return NULL; // Não encontrado
+    Vaccine *entry = table->table[index];
+    while (entry != NULL && strcmp(entry->lote, lote) != 0) {
+        entry = entry->next;
     }
-
-    return table->table[index]; // Encontrado
+    return entry; // Retorna NULL se não encontrado
 }
 
 void free_table(HashTable *table) {
     for (int i = 0; i < table->size; i++) {
-        if (table->table[i] != NULL) {
-            free(table->table[i]);
+        Vaccine *entry = table->table[i];
+        while (entry != NULL) {
+            Vaccine *next = entry->next;
+            free(entry);
+            entry = next;
         }
     }
     free(table->table);
@@ -109,10 +145,11 @@ int get_number_of_lots(HashTable *table) {
 
 void print_lots_table(HashTable *table) {
     for (int i = 0; i < table->size; i++) {
-        Vaccine *vaccine = table->table[i];
-        if (vaccine != NULL) {
+        Vaccine *entry = table->table[i];
+        while (entry != NULL) {
             printf("Index %d:\n", i);
-            printf("  Lote: %s, Data: %02d-%02d-%04d, Doses: %d, Nome: %s, Aplicações: %d\n", vaccine->lote, vaccine->date.day, vaccine->date.month, vaccine->date.year, vaccine->doses, vaccine->name, vaccine->applications);
+            printf("Lote: %s, Data: %02d-%02d-%04d, Doses: %d, Nome: %s, Aplicações: %d\n", entry->lote, entry->date.day, entry->date.month, entry->date.year, entry->doses, entry->name, entry->applications);
+            entry = entry->next;
         }
     }
 }

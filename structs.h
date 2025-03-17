@@ -14,12 +14,13 @@ typedef struct {
 } Date;
 
 // Estruturas para a tabela de lotes
-typedef struct {
+typedef struct Vaccine {
     char lote[MAX_LOTE_LENGTH];
     char name[MAX_NAME_LENGTH];
     Date date;
     int doses;
     int applications; // Número de aplicações
+    struct Vaccine *next; // Ponteiro para o próximo lote (para lidar com colisões)
 } Vaccine;
 
 typedef struct {
@@ -86,9 +87,9 @@ HashTable* create_table(int size);
 void resize_table(HashTable *table);
 int insert_vaccine(HashTable *table, const char *lote, Date date, int doses, const char *name);
 int remove_vaccine(HashTable *table, const char *name);
-Vaccine* find_vaccine(HashTable *table, const char *name);
+Vaccine* find_lote(HashTable *table, const char *lote);
 void free_table(HashTable *table);
-Lote* find_lotes(VaccineHashTable *table, const char *vaccine_name);
+Lote* find_vaccine(VaccineHashTable *table, const char *vaccine_name);
 int get_number_of_lots(HashTable *table);
 int insert_lote(VaccineHashTable *table, const char *vaccine_name, const char *lote, HashTable *lote_table);
 void free_vaccine_table(VaccineHashTable *table);
@@ -103,6 +104,10 @@ int insert_user(UserHashTable *table, const char *name) ;
 int remove_user(UserHashTable *table, const char *name);
 int add_application(UserHashTable *user_table, const char *user_name, 
     const char *vaccine_name, Date date, const char *lote);
+
+
+Date get_oldest_date(VaccineHashTable *table,HashTable *lots_table, const char *vaccine_name);
+
 
 
 

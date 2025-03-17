@@ -15,7 +15,7 @@ void add_lot(const char *lote, Date date, int doses, const char *vaccine_name, V
         }
         return;
     }
-    if (find_vaccine(lots_table, lote) != NULL) {
+    if (find_lote(lots_table, lote) != NULL) {
         if (portuguese) {
             printf("número de lote duplicado\n");
         } else {
@@ -61,13 +61,13 @@ void list_lots(VaccineHashTable *vaccine_table, HashTable *lots_table, const cha
         for (int i = 0; i < vaccine_table->size; i++) {
             VaccineEntry *entry = vaccine_table->table[i];
             if (entry == NULL) continue;  
-    
+
             while (entry != NULL) {
                 Lote *lotes = entry->lotes;
                 if (lotes == NULL) continue; 
-    
+
                 while (lotes != NULL) {
-                    Vaccine *vaccine = find_vaccine(lots_table, lotes->lote);
+                    Vaccine *vaccine = find_lote(lots_table, lotes->lote);
                     if (vaccine != NULL) {
                         printf("%s %s %02d-%02d-%04d %d %d\n", entry->name, lotes->lote, vaccine->date.day, vaccine->date.month, vaccine->date.year, vaccine->doses, vaccine->applications);
                     } 
@@ -77,7 +77,7 @@ void list_lots(VaccineHashTable *vaccine_table, HashTable *lots_table, const cha
             }
         }
     } else {
-        Lote *lotes = find_lotes(vaccine_table, vaccine_name);
+        Lote *lotes = find_vaccine(vaccine_table, vaccine_name);
         if (lotes == NULL) {
             if (portuguese) {
                 printf("%s: vacina inexistente\n", vaccine_name);
@@ -86,50 +86,42 @@ void list_lots(VaccineHashTable *vaccine_table, HashTable *lots_table, const cha
             }
             return;
         }
-
-        printf("%s:\n", vaccine_name);
-
-        // Cria uma lista de lotes para ordenação
-        Lote *sorted_lotes = NULL;
         while (lotes != NULL) {
-            Lote *new_lote = malloc(sizeof(Lote));
-            if (new_lote == NULL) {
-                fprintf(stderr, "Erro ao alocar memória\n");
-                return;
+            Vaccine *vaccine = find_lote(lots_table, lotes->lote);
+            if (vaccine != NULL) {
+                printf("%s %s %02d-%02d-%04d %d %d\n", vaccine_name, lotes->lote, vaccine->date.day, vaccine->date.month, vaccine->date.year, vaccine->doses, vaccine->applications);
             }
-            strcpy(new_lote->lote, lotes->lote);
-            new_lote->next = NULL;
-
-            // Insere o lote na lista ordenada
-            Lote **current = &sorted_lotes;
-            while (*current != NULL) {
-                Vaccine *details_current = find_vaccine(lots_table, (*current)->lote);
-                Vaccine *details_new = find_vaccine(lots_table, new_lote->lote);
-                if (details_current != NULL && details_new != NULL) {
-                    Date date_current = details_current->date;
-                    Date date_new = details_new->date;
-                    if (compare_dates(date_current, date_new) > 0 || 
-                        (compare_dates(date_current, date_new) == 0 && strcmp((*current)->lote, new_lote->lote) > 0)) {
-                        break;
-                    }
-                }
-                current = &(*current)->next;
-            }
-            new_lote->next = *current;
-            *current = new_lote;
-
             lotes = lotes->next;
         }
-
-        // Imprime a lista ordenada de lotes
-        while (sorted_lotes != NULL) {
-            Vaccine *vaccine = find_vaccine(lots_table, sorted_lotes->lote);
-            if (vaccine != NULL) {
-                printf("%s %s %02d-%02d-%04d %d %d\n", vaccine_name, sorted_lotes->lote, vaccine->date.day, vaccine->date.month, vaccine->date.year, vaccine->doses, vaccine->applications);
-            }
-            Lote *temp = sorted_lotes;
-            sorted_lotes = sorted_lotes->next;
-            free(temp);
-        }
     }
+}
+
+
+
+
+
+
+
+void vaccinate(const char *user_name, const char *vaccine_name,VaccineHashTable *vaccine_table, HashTable *lots_table,Date current_date,int portuguese) {
+    if (find_vaccine(vaccine_table, vaccine_name) == NULL) {
+        if (portuguese) {
+            printf("esgotado\n");
+        } else {
+            printf("no stock\n");
+        }
+        return;
+    }
+    find_lote(lots_table, vaccine_name);
+    Date date = get_oldest_date(vaccine_table, lots_table, vaccine_name);
+    if (compare_dates(date, current_date) == 1||date.day==0) {
+        if (portuguese) {
+            printf("esgotado\n");
+        } else {
+            printf("no stock\n");
+        }
+        return;
+    }
+    printf("%s %d-%d-%d \n",user_name,date.day,date.month,date.year);
+    
+    return;
 }
