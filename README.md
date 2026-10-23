@@ -1,59 +1,62 @@
-# Vaccine Management System (IAED 2024/2025) 💉🗓️
-This project is a vaccine management system developed for the IAED course during the 2024/2025 academic year.
+<div align="center">
 
-# Overview
+# Vaccine Management System
 
-This system allows managing vaccine batches and tracking inoculations to users. Features include:
-Adding new vaccine batches with expiration dates and available doses
-Applying vaccine doses to users
-Removing vaccine batches or vaccine applications
-Listing vaccines and applications
-Simulating the passing of time
-All interaction happens through command-line commands.
+Vaccine batches and inoculations, from the command line. IAED 2024/2025.
 
-## Features 🚀
-Unique vaccine batch identification with validation
-Expiration dates and dose availability management
-Support for user names with spaces (quoted or unquoted)
-Efficient memory management without global variables
-Bilingual error messages: English (default) and Portuguese (with 'pt' argument)
+<img src="https://img.shields.io/badge/C-A8B9CC?style=flat&logo=c&logoColor=black" alt="C">
+<img src="https://img.shields.io/badge/Built_at-IST-009DE0?style=flat" alt="Built at">
 
-# Commands 📋
-```
-q : Quit the program
+</div>
 
-c : Add a new vaccine batch
+<br>
 
-l : List vaccines (all or filtered by name)
+A command-line system that manages vaccine batches and the doses given to each person. It was the
+project for Introdução aos Algoritmos e Estruturas de Dados at Instituto Superior Técnico.
 
-a : Apply a vaccine dose to a user
+## What it does
 
-r : Remove vaccine batch availability
+- Adds vaccine batches with a unique batch id, an expiry date and a number of doses
+- Applies a dose to a person from the batch with the earliest date
+- Removes batches and deletes inoculation records
+- Lists vaccines, filtered by name, and inoculations
+- Moves the simulated date forward, so batches expire
+- Accepts names with spaces, quoted or not
+- Prints errors in English, or in Portuguese with the `pt` argument
+- Uses no global variables
 
-d : Delete vaccine application records
+## Commands
 
-u : List vaccine applications
+| Command | Action |
+|---|---|
+| `c` | Add a vaccine batch |
+| `l` | List vaccines, all or by name |
+| `a` | Apply a dose to a person |
+| `r` | Remove a batch's availability |
+| `d` | Delete inoculation records |
+| `u` | List inoculations |
+| `t` | Advance the simulated date |
+| `q` | Quit |
 
-t : Advance the simulated date
-```
-# Usage 💻
-Compile with:
-```
+## Build and run
+
+```bash
 gcc -O3 -Wall -Wextra -Werror -Wno-unused-result -o proj *.c
+./proj          # English messages
+./proj pt       # Portuguese messages
 ```
-## Run with:
-```
-./proj
-```
-For Portuguese messages:
-```
-./proj pt
-```
-Enter commands as per the project instructions.
 
-# Notes 📝
-Initial system date: 01-01-2025
+The public tests are in `public-tests/`; run them with its `Makefile`.
 
-Supports up to 1000 vaccine batches
+## Layout
 
-Handles large inputs with dynamic memory management and very fast lookups
+```
+main.c                 entry point and command loop
+commands.c             one handler per command
+vaccine_table.c        vaccine hash table
+lots_table.c           batches by id
+aplications_table.c    inoculation records
+functions.c            dates, parsing, validation
+structs.h constants.h  shared types and limits
+public-tests/          course test inputs and expected outputs
+```
